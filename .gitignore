@@ -1,0 +1,32 @@
+/target
+/volume
+
+# Terraform
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# TF local variables file
+*.tfvars.local
+
+# Local env variables
+.env
+
+# Editor
+.idea/*
+.DS_Store
+.vim/*
+.zed/*
+
+# MacOS
+.DS_Store
+.vscode/settings.json
+
+# ASDF config file
+.tool-versions
+
+# PgAdmin local template
+*pgadmin.tf

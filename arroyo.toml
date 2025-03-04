@@ -1,0 +1,12 @@
+checkpoint-url = 's3://arroyo/checkpoints'
+
+[controller]
+scheduler = 'node'
+
+[database]
+type = "postgres"
+
+[s3]
+endpoint-url = "http://arroyo-localstack:4566"
+region = "us-west-2"
+force-path-style = true
