@@ -70,6 +70,8 @@ services:
       - LS_LOG=trace
       - SNOWFLAKE_USE_HTTP=true
       - SNOWFLAKE_INSECURE_MODE=true
+      - SNOWFLAKE_RSA_PUBLIC_KEY=${SNOWFLAKE_RSA_PUBLIC_KEY}
+      - SNOWFLAKE_RSA_PRIVATE_KEY=${SNOWFLAKE_RSA_PRIVATE_KEY}
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
