@@ -30,3 +30,5 @@
 
 # PgAdmin local template
 *pgadmin.tf
+
+.rsa/*

@@ -1,0 +1,69 @@
+-- Database and Schema
+CREATE DATABASE IF NOT EXISTS CLIST;
+CREATE SCHEMA IF NOT EXISTS CLIST.UDFS;
+
+-- Warehouse
+CREATE WAREHOUSE IF NOT EXISTS WH
+WITH WAREHOUSE_SIZE = 'XSMALL'
+AUTO_SUSPEND = 60
+AUTO_RESUME = TRUE;
+
+-- UDF: FRAUD_CHECK
+CREATE OR REPLACE FUNCTION CLIST.UDFS.FRAUD_CHECK(entity_id VARCHAR, txn_amount NUMBER, transaction_id VARCHAR)
+RETURNS VARIANT
+LANGUAGE JAVASCRIPT
+AS
+$$
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * max);
+    }
+    var indicatorsPool = [
+        "unusual_location", "high_velocity", "large_amount",
+        "new_device", "ip_anomaly", "account_age"
+    ];
+    var fraudScore = getRandomInt(11);
+    var riskCategory = fraudScore <= 3 ? "low" : fraudScore <= 6 ? "medium" : "high";
+    var shuffledIndicators = indicatorsPool.sort(() => 0.5 - Math.random());
+    var keyIndicators = shuffledIndicators.slice(0, 3);
+    var rationale = "Transaction flagged due to " + keyIndicators.join(", ") + ". Score: " + fraudScore + ".";
+    var response = {
+        "fraud_score": fraudScore,
+        "risk_category": riskCategory,
+        "key_indicators": keyIndicators,
+        "rationale": rationale,
+        "entity_id": entity_id,
+        "transaction_id": transaction_id,
+        "cs_response": "Evaluated by mock fraud system at " + new Date().toISOString()
+    };
+    return response;
+$$;
+
+-- Roles
+CREATE ROLE IF NOT EXISTS CLIST_ROLE;
+CREATE ROLE IF NOT EXISTS ADMIN_ROLE;
+
+-- Grant warehouse access
+GRANT USAGE ON WAREHOUSE WH TO ROLE CLIST_ROLE;
+GRANT USAGE ON WAREHOUSE WH TO ROLE ADMIN_ROLE;
+
+-- Grant database and schema access
+GRANT USAGE ON DATABASE CLIST TO ROLE CLIST_ROLE;
+GRANT USAGE ON DATABASE CLIST TO ROLE ADMIN_ROLE;
+GRANT USAGE ON SCHEMA CLIST.UDFS TO ROLE CLIST_ROLE;
+GRANT USAGE ON SCHEMA CLIST.UDFS TO ROLE ADMIN_ROLE;
+
+-- Grant function access
+GRANT USAGE ON FUNCTION CLIST.UDFS.FRAUD_CHECK(VARCHAR, NUMBER, VARCHAR) TO ROLE CLIST_ROLE;
+GRANT OWNERSHIP ON FUNCTION CLIST.UDFS.FRAUD_CHECK(VARCHAR, NUMBER, VARCHAR) TO ROLE ADMIN_ROLE;
+
+-- Create API user
+CREATE USER IF NOT EXISTS fraud_api_user
+PASSWORD = 'secure_password_123'
+DEFAULT_ROLE = CLIST_ROLE
+DEFAULT_WAREHOUSE = WH
+DEFAULT_NAMESPACE = 'CLIST.UDFS';
+
+GRANT ROLE CLIST_ROLE TO USER fraud_api_user;
+GRANT ROLE ADMIN_ROLE TO ROLE SYSADMIN;
+
+ALTER USER fraud_api_user SET RSA_PUBLIC_KEY='{{SNOWFLAKE_RSA_PUBLIC_KEY}}';
